@@ -24,6 +24,10 @@ This would translate to the most processing during install, however the amount o
 
 CSS (and SASS/LESS) imports would benefit from this.
 
+A consideration with this is that different languages support different escape codes, etc. Another thing to consider is that dependency paths might be split across variables (e.g. a constant pointing to the dependencies folder). Customisation options sound like the best bet here.
+
+To ensure consistent performance, replace locations should be identified during publish.
+
 #### Static module paths via flattened dependency tree
 
 An extension on path rewriting, we could enforce a flat dependency tree requirement which would permit path rewriting to happen once (during submission). This could obviously present challenges if we decide to allow multiple versions of dependencies, however there is no reason we couldn't support both scenarios (defaulting to flat for performance).
@@ -172,3 +176,11 @@ This serves a few purposes;
 - Provide a means to audit the data integrity.
 
 An existing issue that would be nice to address with this implementation is different environments wanting different dependencies. This should not happen, the lockfile should already have these taken into consideration. In the same stroke, dependencies not needed should not be downloaded.
+
+## Mechanism of operation
+
+From a performance perspective, and getting running as quickly as possible perspective, the best bet for this is having a native binary of some kind.
+
+.NET Core can be compiled like this with the runtime bundled up, which makes it a strong candidate. Its also got a reasonably low barrier of entry, simple multithreading, and surprisingly small binary size.
+
+If we wanted to squeeze even more performance, Rust looks like a solid choice. Particularly due to how much harder it is to cause memory leaks vs. C++.
