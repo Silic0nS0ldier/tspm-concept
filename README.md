@@ -10,12 +10,6 @@ One of the important considerations for this file-oriented approach is that rele
 
 Would be nice to have a minimal dependencies, with old duplicates being flagged with a warning (since they can be the source of odd issues).
 
-### `tspm.ts`, `tspm.js`, etc dependency maps
-
-One possible solution would be to store the critical information in a file understood by the consuming language. In the case of TypeScript, a `const enum` could be used to inline values for better performance. This would be comparable to a composer autoload in some ways.
-
-This approach however has the greatest work required, and simply won't work for certain scenarios.
-
 ### Rewrite paths
 
 One option that would provide a nearly global solution is to rewrite paths like `tspm/depname/x.x.x` to refer to the correct version.
@@ -28,6 +22,8 @@ A consideration with this is that different languages support different escape c
 
 To ensure consistent performance, replace locations should be identified during publish.
 
+ES Modules require a string literal, which will greatly simplify rewriting of path strings.
+
 #### Static module paths via flattened dependency tree
 
 An extension on path rewriting, we could enforce a flat dependency tree requirement which would permit path rewriting to happen once (during submission). This could obviously present challenges if we decide to allow multiple versions of dependencies, however there is no reason we couldn't support both scenarios (defaulting to flat for performance).
@@ -39,6 +35,8 @@ Depending on the route we go with version range collisions, there are 4 viable s
 Support for alternate tools could be implemented by having fixed semver ranges being recommended. Whatever static resolution logic is in place could still be applied to dependencies themselves.
 
 If the solution is for tooling to work around the version tree (not the reverse), could provide a helper to inform what the direct dependency is, or even a source update command.
+
+Folders named after dependency versions should prefix versions with `v` to make it clear that what is shown is _not_ a semver range.
 
 ### Single dependency version
 
@@ -67,12 +65,12 @@ Disadvantages;
 . (project root)
 +-- tspm
 |   +-- dep-name-1
-|   |   +-- 3.2.7
+|   |   +-- v3.2.7
 |   |   |   +-- (dependency files)
-|   |   +-- 0.2.7
+|   |   +-- v0.2.7
 |   |       +-- (dependency files)
 |   +-- dep-name-2
-|       +-- 1.1.0-rc.1
+|       +-- v1.1.0-rc.1
 |           +-- (dependency files)
 +-- tspm.json
 +-- tspm-lock.json
@@ -92,12 +90,12 @@ Disadvantages;
 . (project root)
 +-- tspm
 |   +-- dep-name-1
-|   |   +-- direct (3.2.7)
+|   |   +-- direct (v3.2.7)
 |   |   |   +-- (dependency files)
-|   |   +-- 0.2.7
+|   |   +-- v0.2.7
 |   |       +-- (dependency files)
 |   +-- dep-name-2
-|       +-- 1.1.0-rc.1
+|       +-- v1.1.0-rc.1
 |           +-- (dependency files)
 +-- tspm.json
 +-- tspm-lock.json
@@ -107,6 +105,7 @@ Advantages;
 - Tooling for LESS, SASS, etc will "just work"™.
 - Highly effective dependency de-duplication.
 - Possibility to implement a 'force-latest' or similiar option that grabs the newest possible versions for each dependency by sacrificing on de-duplication effectiveness.
+- Possibility to uniquely identify local dependency builds like `npm link`.
 
 Disadvantages;
 - Dependency version not known many stacktraces.
@@ -119,10 +118,10 @@ Disadvantages;
 |   +-- dep-name-1
 |   |   +-- direct-3.2.7
 |   |   |   +-- (dependency files)
-|   |   +-- 0.2.7
+|   |   +-- v0.2.7
 |   |       +-- (dependency files)
 |   +-- dep-name-2
-|       +-- 1.1.0-rc.1
+|       +-- v1.1.0-rc.1
 |           +-- (dependency files)
 +-- tspm.json
 +-- tspm-lock.json
@@ -184,3 +183,102 @@ From a performance perspective, and getting running as quickly as possible persp
 .NET Core can be compiled like this with the runtime bundled up, which makes it a strong candidate. Its also got a reasonably low barrier of entry, simple multithreading, and surprisingly small binary size.
 
 If we wanted to squeeze even more performance, Rust looks like a solid choice. Particularly due to how much harder it is to cause memory leaks vs. C++.
+
+## Configuration files
+
+For a multitude of reasons JSON is the perferred file format. JSON with comments is off the table due to file modification complexity.
+
+<kbd>`tsdm.json`</kbd>
+what about env dependencies?
+consider deployment for various environments, would be nice to be able to do for any os on one platform.
+maybe use args for the installation? How would this play out with build tools? do we want to support build tools in this project?
+```json
+{
+    "file": "1.0.0", // File version.
+    "displayName": "TypeScript Dependency Manager",
+    "name": "tsdm",
+    "version": "2.5.1",
+    "dependencies": {
+        "*": {}, // Dependencies that are always needed.
+        "dev": {}, // Will not influence * dependency version resolution.
+        "test": {} // Will not influence * dependency version resolution.
+    },
+    "typescript": {
+        "version": "3.0.0" // TypeScript version code targets.
+    }
+}
+```
+
+<kbd>tsdm.lock.json</kbd>
+
+```json
+{
+    "dependencies": {
+        "win": {
+            "*": {
+                "tsdm/publisher/foo": {
+                    "version": "",
+                    "integrityHash": ""
+                }
+            },
+            "dev": {},
+            "test": {}
+        },
+        "unix": {
+
+        }
+    }
+}
+```
+
+<kbd>tsdm.pub.json</kbd>
+
+```json
+{
+    "file": "1.0.0", // File version.
+    "displayName": "TypeScript Dependency Manager",
+    "name": "tsdm",
+    "version": "2.5.1",
+    "dependencies": {
+        // Dependencies (not dev nor test)
+    },
+    "typescript": {
+        "version": "3.0.0" // TypeScript version code targets.
+    }
+}
+```
+
+## Platform identity
+
+Most tools in the ecosystem specifically for TypeScript either play off the word "type" (e.g. DefinitelyTyped) or incorporate "TS" (e.g. TSLint) into their name. The latter should prevent misconceptions from chance similiarties between existing ecosystems, but is less memorable.
+
+Ideas;
+- TypeSource
+  Could be confused with fonts. One persons site has a sub section called TypeSource, dedicated to fonts.
+  A project called `TypeStyle` uses this convention for a CSS in JS/TS library.
+  Domains are available (ignoring the crazy expensive `.com`). `.io` sounds nice, is a consice TLD, and kinda fits with what a dependency manager does.
+  What would the cli binary be called? `tsrc` would work, less characters the better though (then again, `composer`...).
+- WebSource
+  Not sure about usage.
+- TypedWebSource
+  Not sure about usage.
+  Sounds "wrong".
+- TSPM
+  Play off NPM.
+- SourceType
+  As in "Source of all TypeScript", has an air of mystery and power.
+  Still very TypeScript only-ish, but type could be said to mean "file type", so SourceTS, SourceLESS. Could build branding around it.
+
+## Misc.
+
+- Probably a good idea to enforce TS only in first release.
+- Container-based compilation testing after publish?
+- Verify non-breaking by running tests of dependents with new version? Would need to verify stable track record first. Automatic dependency pinning/avoiding?
+- Could detect changes to existing APIs. Block if incompatible.
+- How will environment dependencies (specific runtime, os) be expressed?
+- Dependency stragety should prioritize newest versions.
+- For private registries, package aliases could be used to permit overriding dependencies with custom versions. Due to path rewriting, duplicates can be avoided.
+- Sometimes your only choice with testing is to publish. So why not have a playground? This would make it easier for dependents to test changes (perhaps to issues they were affected by even). Would be kinda like a public `npm link`.
+- `main` or similiar for direct dependencies is looking like the best solution for dependencies folder.
+- TypeScript configurations tend to vary quite a bit and affect what code can go in. Need to manage this somehow.
+- No reason it can't be a file-oriented dependency manager. Language specific integrations would still be possible, and platform could evolve with any shifts to new technology (within reason, though web usually is file-oriented).
