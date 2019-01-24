@@ -282,3 +282,4 @@ Ideas;
 - `main` or similiar for direct dependencies is looking like the best solution for dependencies folder.
 - TypeScript configurations tend to vary quite a bit and affect what code can go in. Need to manage this somehow.
 - No reason it can't be a file-oriented dependency manager. Language specific integrations would still be possible, and platform could evolve with any shifts to new technology (within reason, though web usually is file-oriented).
+- A way to weed out the use of extremely small dependencies should be used. As in exceptionally small dependencies like `left-pad` that seem unimportant but could end up bringing down the entire ecosystem if removed for broken.
