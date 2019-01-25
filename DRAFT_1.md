@@ -17,6 +17,12 @@ Treatment of duplicate dependencies is subject to the technologies within. As an
 
 To discourage the special kind of dependency hell that is having 10+ versions of the same dependency, duplicates will prompt a warning.
 
+### Development Dependency Offset
+
+To help prevent vulnerable or old versions of dependencies being used in the project development dependencies will not be considered in the initial dependency graph resolution. Development dependency resolution is then conducted with the already resolved dependencies acting as semver pinned versions.
+
+This offset will cause dependency resolution failures in projects with dependencies that are unable to handle duplicates.
+
 ## Directory Structure
 
 The directory structure has been designed to be consistent and predictable. The below chart illustrates this.
@@ -72,6 +78,77 @@ Publishing of projects depending on playgrounds will be blocked to prevent misus
 
 ### `sourcetype.json`
 
+The file used within projects.
+
+```json
+{
+    "fileVersion": "1.0.0",
+    "name": "sourcetype",
+    "version": "1.0.0",
+    "license": "",
+    "addToPath": {
+        "linux": "bin/linux/",
+        "linux-x64": "bin/linux-x64/",
+        "win10": "bin/win10/"
+    },
+    "lifecycleHooks": {
+        "preInstall": "",
+        "postInstall": "",
+        "preUpdate": "",
+        "postUpdate": "",
+    },
+    "commands": {
+        "build": "dotnet build"
+    },
+    "external": {
+        "coolConfig": {}
+    },
+    "dependencies": {
+        "*": {
+            "cool-cli-lib": "7.54.12"
+        },
+        "dev": {
+            "dotnetcore": "3.0.0"
+        }
+    }
+}
+```
+
 ### `sourcetype-lock.json`
 
+The file used to ensure a measure of consistency across development environments and cache the dependency resolution result along with any transformations to be performed to paths.
+
+```json
+{
+
+}
+```
+
 ### `sourcetype-pub.json`
+
+The file used for managing a dependency.
+
+```json
+{
+    "fileVersion": "1.0.0",
+    "publishedWith": "SourceType CLI 1.25.2",
+    "version": "3.64.1",
+    "dependencies": {
+        "cool-dep": "^3.8.236",
+        "cooler-dep": "^3.1.6"
+    },
+    "addToPath": {
+        "linux": "bin/linux/",
+        "macos": "bin/macos/",
+        "win": "bin/win/"
+    }
+}
+```
+
+## PATH Environment Variable
+
+Any command executed through the package manager will receive a customised version of the system and user `PATH` environment variable with paths specified in direct dependencies overlaid for convenience.
+
+This modified `PATH` is available to `exec` and `run` (both commands run through a [_Hosted PowerShell Core_](https://github.com/PowerShell/PowerShell/tree/master/docs/host-powershell) instance for cross platfom consistency).
+
+The concept of globally installed dependencies is not supported to prevent instances of tooling mismatches causing unpredictable behaviour that is difficult to troubleshoot.
