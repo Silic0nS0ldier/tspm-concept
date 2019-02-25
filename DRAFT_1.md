@@ -82,7 +82,7 @@ The file used within projects.
 
 ```json
 {
-    "fileVersion": "1.0.0",
+    "$schema": "https://schema.typesource.org/sourcetype/1.0.0",
     "name": "sourcetype",
     "version": "1.0.0",
     "license": "",
@@ -120,7 +120,43 @@ The file used to ensure a measure of consistency across development environments
 
 ```json
 {
-
+    "$schema": "https://schema.typesource.org/sourcetype-lock/1.0.0",
+    "dependencies": {
+        "*": {
+            "cool-cli-lib": [
+                {
+                    "version": "7.54.12",
+                    "integrity-hash": {
+                        "original": "...",
+                        "current": "..."
+                    },
+                    "dependsOn": {
+                        "cool-lib": "5.0.3"
+                    }
+                }
+            ],
+            "cool-lib": [
+                {
+                    "version": "5.0.3",
+                    "integrity-hash": {
+                        "original": "...",
+                        "current": "..."
+                    }
+                }
+            ]
+        },
+        "dev": {
+            "dotnetcore": [
+                {
+                    "version": "3.0.0",
+                    "integrity-hash": {
+                        "original": "...",
+                        "current": "..."
+                    }
+                }
+            ]
+        }
+    }
 }
 ```
 
@@ -130,7 +166,7 @@ The file used for managing a dependency.
 
 ```json
 {
-    "fileVersion": "1.0.0",
+    "$schema": "https://schema.typesource.org/sourcetype-pub/1.0.0",
     "publishedWith": "SourceType CLI 1.25.2",
     "version": "3.64.1",
     "dependencies": {
@@ -145,10 +181,21 @@ The file used for managing a dependency.
 }
 ```
 
-## PATH Environment Variable
+## Scripts
 
-Any command executed through the package manager will receive a customised version of the system and user `PATH` environment variable with paths specified in direct dependencies overlaid for convenience.
+Scripts can be manually run via;
+- `run` to open a terminal
+- `run -r "cmd"` to execute the provided string
+- `run "script-name"` to execute predefined snippets
 
-This modified `PATH` is available to `exec` and `run` (both commands run through a [_Hosted PowerShell Core_](https://github.com/PowerShell/PowerShell/tree/master/docs/host-powershell) instance for cross platfom consistency).
+For convenience various hooks for various in-box commands exist. To reduce the risk of rouge scripts permissions available to each hook will vary according to their implicit permissions. Some examples of implicit permissions are;
+- `test` implicitly grants reading, writing, and execution permissions
+- `install` implicitly grants almost nothing
 
-The concept of globally installed dependencies is not supported to prevent instances of tooling mismatches causing unpredictable behaviour that is difficult to troubleshoot.
+There are always cases where the granted implicit permissions may not be enough for a genuine use case, so to address this permission requirements can be declared. If these permission requirements are not impilictly met, the user will be prompted to either grant them and continue or decline and stop.
+
+### Environment
+
+Any command executed through the package manager recieves a contextual `PATH` variable consisting exclusively of direct dependencies, and be run through a [_Hosted PowerShell Core_](https://github.com/PowerShell/PowerShell/tree/master/docs/host-powershell) instance to permit greater consistency across platforms. To ensure that dependencies are always satisfied `PATH` will change along with the context.
+
+Given the risk of tooling mismatches global dependencies and the challenges around dealing with them, their support is outside of the scope of this initial draft.
