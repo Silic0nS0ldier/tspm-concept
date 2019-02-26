@@ -19,7 +19,7 @@ To discourage the special kind of dependency hell that is having 10+ versions of
 
 ### Development Dependency Offset
 
-To help prevent vulnerable or old versions of dependencies being used in the project development dependencies will not be considered in the initial dependency graph resolution. Development dependency resolution is then conducted with the already resolved dependencies acting as semver pinned versions.
+To help prevent vulnerable or old versions of dependencies being used in production code, development dependencies will not be considered in the initial dependency graph resolution. Development dependency resolution is then conducted with the already resolved dependencies acting as semver pinned versions.
 
 This offset will cause dependency resolution failures in projects with dependencies that are unable to handle duplicates.
 
@@ -66,6 +66,15 @@ All dependencies are held at the same level in the directory structure to ease a
 
 Direct dependencies are uniquely marked as such with `d` to permit easy usage of dependency content in a predictable fashion. Version information via folder name is lost by doing this however there is no significant disadvantage as usage of a dependency requires that its documentation be read, which in turn requires the version to verify.
 
+### Environments
+
+Dependencies on certain external entities such as the OS or runtime can be declared to ensure 2 things.
+
+1. The execution environment is compatible
+2. All resolved dependencies should work across all declared environments
+
+Dependencies that declare requirements but have no rule to check against will result in a preference for a combination that produces the widest compatibility range. When this occurs a warning will be produced along with some recommendations to ensure that all intended environments are supported.
+
 ## The Playground
 
 In semantic versioning the <kbd>0.x.x</kbd> version range is commonly used for the release of developmental code. This however does to work so well once <kbd>1.0</kbd> has been reached making effective open development tricky. Furthermore, the tagging of versions at these volitate times is counterproductive and many send the wrong message if the intent is simply to test something that requires publishing.
@@ -85,7 +94,7 @@ The file used within projects.
     "$schema": "https://schema.typesource.org/sourcetype/1.0.0",
     "name": "sourcetype",
     "version": "1.0.0",
-    "license": "",
+    "license": "LICENSE.md",
     "addToPath": {
         "linux": "bin/linux/",
         "linux-x64": "bin/linux-x64/",
@@ -110,6 +119,26 @@ The file used within projects.
         "dev": {
             "dotnetcore": "3.0.0"
         }
+    },
+    // TODO These are used in dependency resolution as well, so only dependencies that also support linux will be used.
+    // TODO Omitting any section automatically means "everything"
+    "environments": {
+        "*": {
+            "os": {
+                "listedOnly": true,
+                "supported": {
+                    "win": "^8.1 || >=10"
+                },
+                "unsupported": {
+                    "linux": ">=1.6.4"
+                }
+            }
+        },
+        "dev": {
+            "runtimes": {
+                "node": "^10.0.0"
+            }
+        }
     }
 }
 ```
@@ -130,6 +159,16 @@ The file used to ensure a measure of consistency across development environments
                         "original": "...",
                         "current": "..."
                     },
+                    "changes": {
+                        "./foo/bar.ts": [
+                            {
+                                "start": 123,
+                                "end": 124,
+                                "offset": 3,
+                                "content": "5.0.3"
+                            }
+                        ]
+                    },
                     "dependsOn": {
                         "cool-lib": "5.0.3"
                     }
@@ -139,7 +178,6 @@ The file used to ensure a measure of consistency across development environments
                 {
                     "version": "5.0.3",
                     "integrity-hash": {
-                        "original": "...",
                         "current": "..."
                     }
                 }
@@ -150,11 +188,29 @@ The file used to ensure a measure of consistency across development environments
                 {
                     "version": "3.0.0",
                     "integrity-hash": {
-                        "original": "...",
                         "current": "..."
                     }
                 }
             ]
+        }
+    },
+    // TODO This should represent the requirements of dependencies as well
+    "environments": {
+        "*": {
+            "os": {
+                "listedOnly": true,
+                "supported": {
+                    "win": "^8.1 || >=10"
+                },
+                "unsupported": {
+                    "linux": ">=1.6.4"
+                }
+            }
+        },
+        "dev": {
+            "runtimes": {
+                "node": "^10.0.0"
+            }
         }
     }
 }
@@ -177,6 +233,12 @@ The file used for managing a dependency.
         "linux": "bin/linux/",
         "macos": "bin/macos/",
         "win": "bin/win/"
+    },
+    "environments": {
+        "os": {
+            "win": "^8.1 || >=10",
+            "linux": ">=1.6.4"
+        }
     }
 }
 ```
