@@ -284,3 +284,4 @@ Ideas;
 - No reason it can't be a file-oriented dependency manager. Language specific integrations would still be possible, and platform could evolve with any shifts to new technology (within reason, though web usually is file-oriented).
 - A way to weed out the use of extremely small dependencies should be used. As in exceptionally small dependencies like `left-pad` that seem unimportant but could end up bringing down the entire ecosystem if removed for broken.
 - Use `$schema` to refer to schemas package formats must adhere too. Could serve as means of file versioning (and makes enforcement much easier).
+- Use .NET command line package to facilitate a solid cross platform experience, plus support tab completion.
