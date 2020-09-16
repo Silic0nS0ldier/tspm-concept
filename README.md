@@ -285,3 +285,9 @@ Ideas;
 - A way to weed out the use of extremely small dependencies should be used. As in exceptionally small dependencies like `left-pad` that seem unimportant but could end up bringing down the entire ecosystem if removed for broken.
 - Use `$schema` to refer to schemas package formats must adhere too. Could serve as means of file versioning (and makes enforcement much easier).
 - Use .NET command line package to facilitate a solid cross platform experience, plus support tab completion.
+- Composer support should keep git and git service API hits to the absolute minimum
+- Need to think about large projects. Could an analogue of VS Studios "solution" be employed to permit scaling of tooling, and simplying dependency installs?
+- PNPM has a really neat way of dealing with dependencies in the NodeJS ecosystem. Concept here deals with certain issues differently, but the way isolation between dependencies is provided is definitely worth a look. PNPM also has some tooling for large projects.
+- A key requirement is that packages cannot run postinstall scripts as a security consideration, how will NodeJS native modules fit into this? i.e. node-sass
+- Some native modules need to consider changes to the local environment (think trying to use a docker installed native node module on the host OS on Windows, NodeJS will terminate due to incompatible binaries)
+- Should we have "non-optimised" versions, aka legacy? i.e. node_modules vs. special direct (spec compliant) file references? Would ease adoption, address a larger set of issues for the broader community. Does add complexity however. Maybe split into 2 separate projects? Plugin oriented approach?
